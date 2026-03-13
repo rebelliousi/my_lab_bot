@@ -21,5 +21,19 @@ async def merhaba(ctx):
 @bot.command()
 async def hi(ctx):
     await ctx.send("Hi! 👋")
+    
+@bot.command()
+async def ping(ctx):
+    gecikme = round(bot.latency * 1000)
+    await ctx.send(f"Pong! 🏓 ({gecikme}ms)")
+
+@bot.command()
+async def say(ctx, *, mesaj):
+    await ctx.send(mesaj)
+
+
+@bot.command()
+async def selam(ctx, isim):
+    await ctx.send(f"Selam {isim}! Bugün nasılsın?")
 
 bot.run(os.getenv("BOT_TOKEN"))
