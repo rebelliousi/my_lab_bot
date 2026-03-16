@@ -15,8 +15,13 @@ class MyBot(commands.Bot):
     # Bot başlarken dosyaları otomatik yükler
     async def setup_hook(self):
         # cogs klasöründeki genel.py dosyasını yükle
-        await self.load_extension("cogs.genel")
-        print("Cogs yüklendi!")
+          # cogs klasöründeki her dosyaya bak
+        for filename in os.listdir("./cogs"):
+            # Sadece .py ile biten dosyaları al
+            if filename.endswith(".py"):
+                # "genel.py" -> "cogs.genel" formatına çevir ve yükle
+                await self.load_extension(f"cogs.{filename[:-3]}")
+        print("Bütün Cog'lar otomatik yüklendi!")
 
 bot = MyBot()
 
