@@ -16,7 +16,7 @@ class Genel(commands.Cog):
     async def selam(self, ctx): # 'self' eklemeyi unutma!
         await ctx.send(f"Selam {ctx.author.name}, ben bir Cog dosyasından geliyorum! 🚀")
         
-    @commands.command()
+    @commands.command(aliases=["tesekkurler", "thanks", "arigato"])
     async def arigatou(self, ctx): # 'self' eklemeyi unutma!
         await ctx.send(f"Douitashimashite {ctx.author.name}, I am always here to help you darling! 🚀")
     
