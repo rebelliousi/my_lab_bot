@@ -6,6 +6,7 @@ class Notlar(commands.Cog):
         self.bot = bot
         # Hafıza burası! {kullanici_id: [not1, not2]} şeklinde tutacak.
         self.not_defteri = {}
+    
 
     # 1. NOT ALMA KOMUTU
     @commands.command()
