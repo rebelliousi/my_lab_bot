@@ -6,19 +6,26 @@ class Notlar(commands.Cog):
         self.bot = bot
         # Hafıza burası! {kullanici_id: [not1, not2]} şeklinde tutacak.
         self.not_defteri = {}
+        
+       # --- SENIOR DOKUNUŞU ---
+    # Bu klasördeki HER komut çalışmadan önce buraya uğrar
+    async def cog_before_invoke(self, ctx):
+        # ID'yi alıp ctx içine "uid" adıyla bir etiket yapıştırıyoruz
+        ctx.uid = ctx.author.id
+        
+        # Hazır gelmişken "Çekmece Kontrolünü" de burada yapalım mı?
+        # Her seferinde 'if id not in...' yazmaktan da kurtuluruz!
+        if ctx.uid not in self.not_defteri:
+            self.not_defteri[ctx.uid] = []
     
 
     # 1. NOT ALMA KOMUTU
     @commands.command()
     async def not_al(self, ctx, *, metin):
-        kullanici_id = ctx.author.id
-        
-        # Eğer kullanıcının daha önce hiç notu yoksa, ona boş bir liste açalım
-        if kullanici_id not in self.not_defteri:
-            self.not_defteri[kullanici_id] = []
-        
-        # Notu listeye ekle
-        self.not_defteri[kullanici_id].append(metin)
+      
+    # Artık ID almakla uğraşmıyoruz, yukarısı halletti!
+
+        self.not_defteri[ctx.uid].append(metin)
         await ctx.send(f"✅ Notun kaydedildi {ctx.author.mention}!")
 
     # 2. NOTLARIM KOMUTU
@@ -26,7 +33,7 @@ class Notlar(commands.Cog):
     async def notlarim(self, ctx):
         kullanici_id = ctx.author.id
         
-        if kullanici_id not in self.not_defteri or len(self.not_defteri[kullanici_id]) == 0:
+        if  len(self.not_defteri[ctx.uid]) == 0:
             return await ctx.send("🕵️ Hiç notun yok gibi görünüyor.")
 
         # Notları numaralandırarak janti bir Embed içinde gösterelim (4. Gün bilgisi!)
@@ -44,9 +51,8 @@ class Notlar(commands.Cog):
     # 3. NOT SİLME KOMUTU
     @commands.command()
     async def not_sil(self, ctx):
-        kullanici_id = ctx.author.id
-        if kullanici_id in self.not_defteri:
-            self.not_defteri[kullanici_id] = [] # Listeyi temizle
+        if  len(self.not_defteri[ctx.uid])>0:
+            self.not_defteri[ctx.uid] = [] # Listeyi temizle
             await ctx.send("🗑️ Bütün notların silindi!")
         else:
             await ctx.send("Zaten silinecek bir notun yok.")
