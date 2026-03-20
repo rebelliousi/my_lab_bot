@@ -15,6 +15,10 @@ class Genel(commands.Cog):
     @commands.command()
     async def selam(self, ctx): # 'self' eklemeyi unutma!
         await ctx.send(f"Selam {ctx.author.name}, ben bir Cog dosyasından geliyorum! 🚀")
+        
+    @commands.command()
+    async def arigatou(self, ctx): # 'self' eklemeyi unutma!
+        await ctx.send(f"Douitashimashite {ctx.author.name}, I am always here to help you darling! 🚀")
     
     @commands.command()
     async def hatirlat(self, ctx, sure: int, *, mesaj):
