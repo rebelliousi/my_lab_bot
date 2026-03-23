@@ -2,11 +2,24 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
+
+# 1. KONFİGÜRASYON (Ayarlar)
+logging.basicConfig(
+    level=logging.INFO, # Hangi seviyedeki mesajlar kaydedilsin? (INFO ve üstü)
+    format='%(asctime)s:%(levelname)s:%(name)s: %(message)s', # Mesaj formatı (Zaman:Seviye:İsim:Mesaj)
+    handlers=[
+        logging.FileHandler(filename='bot.log', encoding='utf-8', mode='a'), # Dosyaya yaz (mode='a' üzerine ekler)
+        logging.StreamHandler() # Aynı zamanda konsola (ekrana) da yaz
+    ]
+)
+
+logger = logging.getLogger('discord') # Discord'un kendi iç olaylarını da yakalayalım
 
 class MyBot(commands.Bot):
     def __init__(self):
@@ -40,13 +53,15 @@ class MyBot(commands.Bot):
 
         # 4. Diğer Beklenmedik Hatalar
         else:
-            print(f"❌ Beklenmedik Hata: {error}")
-            await ctx.send("💥 Bir şeyler ters gitti, arka tarafta dumanlar çıkıyor!")
+             logging.error(f"Beklenmedik bir hata oluştu: {error}")
+             await ctx.send("💥 Bir şeyler ters gitti!")
 
 bot = MyBot()
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} olarak giriş yapıldı.")
+    logging.info(f"--- BOT HAZIR ---")
+    logging.info(f"Kullanıcı: {bot.user}")
+    logging.info(f"ID: {bot.user.id}")
 
 bot.run(os.getenv("BOT_TOKEN"))
