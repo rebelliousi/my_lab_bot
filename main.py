@@ -40,15 +40,20 @@ class MyBot(commands.Bot):
     async def on_command_error(self, ctx, error):
         # 1. Komut Bulunamadı
         if isinstance(error, commands.CommandNotFound):
+            logging.warning(f"Bilinmeyen komut denendi: {ctx.author} -> {ctx.message.content}")
+
             await ctx.send("🕵️ Böyle bir komut bulamadım gardash. `!yardim` yazarak bakabilirsin.")
         
         # 2. Eksik Bilgi (Argüman)
         elif isinstance(error, commands.MissingRequiredArgument):
+            logging.warning(f"Eksik bilgi hatası: {ctx.author} -> {ctx.command.name}")
             # ctx.command.signature otomatik olarak '!say <mesaj>' gibi kullanımı gösterir
             await ctx.send(f"⚠️ Eksik bilgi! Doğru kullanım: `{self.command_prefix}{ctx.command.name} {ctx.command.signature}`")
         
         # 3. Yetki Hatası
         elif isinstance(error, commands.MissingPermissions):
+            logging.info(f"YETKİSİZ GİRİŞ: {ctx.author} -> {ctx.command.name} komutunu denedi!")
+
             await ctx.send("🚫 Bu işi yapmaya yetkin yetmez be ya!")
 
         # 4. Diğer Beklenmedik Hatalar
