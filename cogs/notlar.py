@@ -31,14 +31,13 @@ class Notlar(commands.Cog):
     # 2. NOTLARIM KOMUTU
     @commands.command()
     async def notlarim(self, ctx):
-        kullanici_id = ctx.author.id
         
         if  len(self.not_defteri[ctx.uid]) == 0:
             return await ctx.send("🕵️ Hiç notun yok gibi görünüyor.")
 
         # Notları numaralandırarak janti bir Embed içinde gösterelim (4. Gün bilgisi!)
         not_listesi = ""
-        for sira, not_metni in enumerate(self.not_defteri[kullanici_id], 1):
+        for sira, not_metni in enumerate(self.not_defteri[ctx.uid], 1):
             not_listesi += f"**{sira}.** {not_metni}\n"
 
         embed = discord.Embed(
