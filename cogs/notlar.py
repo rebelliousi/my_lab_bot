@@ -1,22 +1,28 @@
 import discord
 from discord.ext import commands
+import aiosqlite 
 
 class Notlar(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # Hafıza burası! {kullanici_id: [not1, not2]} şeklinde tutacak.
-        self.not_defteri = {}
+        self.db_name = "bot.db"
         
-       # --- SENIOR DOKUNUŞU ---
-    # Bu klasördeki HER komut çalışmadan önce buraya uğrar
-    async def cog_before_invoke(self, ctx):
-        # ID'yi alıp ctx içine "uid" adıyla bir etiket yapıştırıyoruz
-        ctx.uid = ctx.author.id
+    @commands.Cog.listener()
+    async def on_ready(self):
+        async with aiosqlite.connect(self.db_name) as db:
+            # 'notlar' tablosu yoksa oluştur: id (otomatik), user_id, metin
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS notlar (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    metin TEXT
+                )
+            """)
+            await db.commit() # Değişiklikleri kaydet
+        print("🗄️ Veritabanı ve Tablo Hazır!")
         
-        # Hazır gelmişken "Çekmece Kontrolünü" de burada yapalım mı?
-        # Her seferinde 'if id not in...' yazmaktan da kurtuluruz!
-        if ctx.uid not in self.not_defteri:
-            self.not_defteri[ctx.uid] = []
+ 
     
 
     # 1. NOT ALMA KOMUTU
@@ -24,21 +30,29 @@ class Notlar(commands.Cog):
     async def not_al(self, ctx, *, metin):
       
     # Artık ID almakla uğraşmıyoruz, yukarısı halletti!
+        async with aiosqlite.connect(self.db_name) as db:
+                await db.execute("INSERT INTO notlar (user_id, metin) VALUES (?, ?)", (ctx.author.id, metin))
+                await db.commit()
+        await ctx.send(f"✅ Notun veritabanına mühürlendi {ctx.author.mention}!")
 
-        self.not_defteri[ctx.uid].append(metin)
-        await ctx.send(f"✅ Notun kaydedildi {ctx.author.mention}!")
+
+
 
     # 2. NOTLARIM KOMUTU
     @commands.command()
     async def notlarim(self, ctx):
         
-        if  len(self.not_defteri[ctx.uid]) == 0:
-            return await ctx.send("🕵️ Hiç notun yok gibi görünüyor.")
+        async with aiosqlite.connect(self.db_name) as db:
+             cursor = await db.execute("SELECT metin FROM notlar WHERE user_id = ?", (ctx.author.id,))
+             notlar = await cursor.fetchall() # Bütün sonuçları al
+        if not notlar:
+            return await ctx.send("🕵️ Veritabanında sana ait bir not bulamadım.")
+
 
         # Notları numaralandırarak janti bir Embed içinde gösterelim (4. Gün bilgisi!)
         not_listesi = ""
-        for sira, not_metni in enumerate(self.not_defteri[ctx.uid], 1):
-            not_listesi += f"**{sira}.** {not_metni}\n"
+        for sira, veri in enumerate(notlar, 1):
+            not_listesi += f"**{sira}.** {veri[0]}\n"
 
         embed = discord.Embed(
             title=f"📝 {ctx.author.name} Not Defteri",
@@ -50,11 +64,14 @@ class Notlar(commands.Cog):
     # 3. NOT SİLME KOMUTU
     @commands.command()
     async def not_sil(self, ctx):
-        if  len(self.not_defteri[ctx.uid])>0:
-            self.not_defteri[ctx.uid] = [] # Listeyi temizle
-            await ctx.send("🗑️ Bütün notların silindi!")
-        else:
-            await ctx.send("Zaten silinecek bir notun yok.")
+        async with aiosqlite.connect(self.db_name) as db:
+           
+         cursor = await db.execute("DELETE FROM notlar WHERE user_id = ?", (ctx.author.id,))
+         await db.commit()
+         if cursor.rowcount > 0:
+            await ctx.send(f"🗑️ Senin adına kayıtlı {cursor.rowcount} adet not silindi!")
+         else:
+            await ctx.send("⚠️ Veritabanında senin adına kayıtlı bir not bulunamadı.")
 
 async def setup(bot):
     await bot.add_cog(Notlar(bot))
