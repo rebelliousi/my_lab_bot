@@ -8,6 +8,9 @@ class Notlar(commands.Cog):
         # Hafıza burası! {kullanici_id: [not1, not2]} şeklinde tutacak.
         self.db_name = "bot.db"
         
+    async def cog_before_invoke(self, ctx):
+        ctx.uid = ctx.author.id
+        
     @commands.Cog.listener()
     async def on_ready(self):
         async with aiosqlite.connect(self.db_name) as db:
@@ -31,7 +34,7 @@ class Notlar(commands.Cog):
       
     # Artık ID almakla uğraşmıyoruz, yukarısı halletti!
         async with aiosqlite.connect(self.db_name) as db:
-                await db.execute("INSERT INTO notlar (user_id, metin) VALUES (?, ?)", (ctx.author.id, metin))
+                await db.execute("INSERT INTO notlar (user_id, metin) VALUES (?, ?)", (ctx.uid, metin))
                 await db.commit()
         await ctx.send(f"✅ Notun veritabanına mühürlendi {ctx.author.mention}!")
 
@@ -43,7 +46,7 @@ class Notlar(commands.Cog):
     async def notlarim(self, ctx):
         
         async with aiosqlite.connect(self.db_name) as db:
-             cursor = await db.execute("SELECT metin FROM notlar WHERE user_id = ?", (ctx.author.id,))
+             cursor = await db.execute("SELECT metin FROM notlar WHERE user_id = ?", (ctx.uid,))
              notlar = await cursor.fetchall() # Bütün sonuçları al
         if not notlar:
             return await ctx.send("🕵️ Veritabanında sana ait bir not bulamadım.")
@@ -63,15 +66,33 @@ class Notlar(commands.Cog):
 
     # 3. NOT SİLME KOMUTU
     @commands.command()
-    async def not_sil(self, ctx):
+    async def not_sil(self, ctx, sira: int = None):
         async with aiosqlite.connect(self.db_name) as db:
-           
-         cursor = await db.execute("DELETE FROM notlar WHERE user_id = ?", (ctx.author.id,))
-         await db.commit()
-         if cursor.rowcount > 0:
-            await ctx.send(f"🗑️ Senin adına kayıtlı {cursor.rowcount} adet not silindi!")
-         else:
-            await ctx.send("⚠️ Veritabanında senin adına kayıtlı bir not bulunamadı.")
+            if sira is None:
+                # Durum 1: Her şeyi sil
+                cursor = await db.execute("DELETE FROM notlar WHERE user_id = ?", (ctx.uid,))
+                mesaj = "Bütün notların başarıyla temizlendi!"
+            else:
+                # Durum 2: Lazer atışı (Subquery)
+                query = """
+                    DELETE FROM notlar 
+                    WHERE id = (
+                        SELECT id FROM notlar 
+                        WHERE user_id = ? 
+                        LIMIT 1 OFFSET ?
+                    )
+                """
+                cursor = await db.execute(query, (ctx.uid, sira - 1))
+                mesaj = f"{sira}. sıradaki notun silindi!"
+
+            # KRİTİK: Commit kapı kapanmadan (with bloğu bitmeden) yapılmalı!
+            await db.commit()
+
+            # TEK BİR MERKEZDEN CEVAP VERİYORUZ
+            if cursor.rowcount > 0:
+                await ctx.send(f"✅ {mesaj}")
+            else:
+                await ctx.send("⚠️ Silinecek bir not bulunamadı.")
 
 async def setup(bot):
     await bot.add_cog(Notlar(bot))
