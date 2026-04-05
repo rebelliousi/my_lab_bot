@@ -62,6 +62,13 @@ class MyBot(commands.Bot):
        logging.info(f"--- BOT HAZIR ---")
        logging.info(f"Kullanıcı: {self.user} (ID: {self.user.id})")
        
+       try:
+            # Bu satır bütün cogs içindeki slash komutlarını toplar ve Discord'a bildirir
+            synced = await self.tree.sync()
+            logging.info(f"✅ {len(synced)} adet Slash komutu başarıyla senkronize edildi!")
+       except Exception as e:
+            logging.error(f"❌ Slash senkronizasyon hatası: {e}")
+       
        
         # --- BURAYA EKLEDİK (BEYNİN HATA MERKEZİ) ---
 
